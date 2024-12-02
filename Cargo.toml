@@ -3,5 +3,10 @@ name = "httpee"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "httpee"
+path = "src/lib.rs"
+
 [dependencies]
+mime_guess = "2.0.5"
 tiny_http = "0.12.0"
