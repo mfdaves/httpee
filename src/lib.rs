@@ -90,7 +90,6 @@ impl ServerUtilities {
         }
     }
 
-    // Serve un file statico
     pub fn serve_file(request: Request, file_path: PathBuf) {
         let file = match File::open(&file_path) {
             Ok(file) => file,
