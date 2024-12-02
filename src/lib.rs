@@ -4,22 +4,22 @@ use std::path::{Path, PathBuf};
 use tiny_http::{Header, Request, Response, Server, StatusCode};
 use mime_guess;
 
-struct Router {
+pub struct Router {
     routes: HashMap<(String, String), Box<dyn Fn(Request)>>,
 }
 
 impl Router {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Router {
             routes: HashMap::new(),
         }
     }
 
-    fn add_route(&mut self, method: &str, endpoint: &str, function: Box<dyn Fn(Request)>) {
+    pub fn add_route(&mut self, method: &str, endpoint: &str, function: Box<dyn Fn(Request)>) {
         self.routes.insert((method.to_string(), endpoint.to_string()), function);
     }
 
-    fn request_handler(&self, req: Request) {
+    pub fn request_handler(&self, req: Request) {
         let endpoint = req.url().to_string();
         let method = req.method().as_str().to_string();
         println!(
@@ -34,17 +34,17 @@ impl Router {
     }
 }
 
-struct ServerOptions<'a> {
-    public_folders: Option<Vec<&'a PathBuf>>,
+pub struct ServerOptions<'a> {
+    pub public_folders: Option<Vec<&'a PathBuf>>,
 }
 
 impl<'a> ServerOptions<'a> {
-    fn new(publics: Option<Vec<&'a PathBuf>>) -> Self {
+    pub fn new(publics: Option<Vec<&'a PathBuf>>) -> Self {
         ServerOptions { public_folders: publics }
     }
 }
 
-struct ServerUtilities;
+pub struct ServerUtilities;
 
 impl ServerUtilities {
     pub fn serve_error(request: Request) {
@@ -141,13 +141,3 @@ impl ServerUtilities {
         }
     }
 }
-
-
-
-//******** Modules allow you to have different place to store your services by topic and utilities
-//******** serve_static allow you to serve all the static file you put in a specific folder inside the project
-//******** you could customize your error handling serving an error pages or just a msg with status code 404
-//******** next I'll add middleware like logging middleware, parameters validator etc etc.. so if users doesn't provide you the correct prm you'll send a error msg
-//******** -> and specific prm you dont 
-
-
