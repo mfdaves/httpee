@@ -1,3 +1,8 @@
+/*
+** todo: implement default trait on ServerOptions, and rewrite run_server,
+** error handling, add middleware and cache handler, drop server command. 
+*/
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -35,20 +40,44 @@ impl Router {
 }
 
 pub struct ServerOptions<'a> {
-    pub public_folders: Option<Vec<&'a PathBuf>>,
+    public_folders: Option<Vec<&'a PathBuf>>,
+	port: u16,
+	//..
 }
 
 impl<'a> ServerOptions<'a> {
-    pub fn new(publics: Option<Vec<&'a PathBuf>>) -> Self {
-        ServerOptions { public_folders: publics }
+    pub fn new(public_folders: Option<Vec<&'a PathBuf>>, port: u16) -> Self {
+        ServerOptions { public_folders, port}
     }
+	
+	pub fn get_port(&self)-> u16{
+		self.port
+	}
+	
+	pub fn get_public_folders(&self)->Option<Vec<&'a PathBuf>>{
+		self.public_folders.clone()
+	}
 }
+
+impl Default for ServerOptions<'_> {
+	fn default () -> Self {
+		ServerOptions{
+			public_folders: None, 
+			port: 8000
+		}
+	}
+}
+
+
+
+
+
 
 pub struct ServerUtilities;
 
 impl ServerUtilities {
     pub fn serve_error(request: Request) {
-        println!("WARNING:: ENDPOINT NOT FOUND!");
+        eprintln!("WARNING:: ENDPOINT NOT FOUND!");
         let error_path = Path::new("public/404.html");
         let file = match File::open(error_path) {
             Ok(file) => file,
@@ -65,31 +94,41 @@ impl ServerUtilities {
         request.respond(response).unwrap();
     }
 
-    pub fn serve_static(public_folder: &PathBuf, router: &mut Router) {
-        if public_folder.is_dir() {
-            for entry in public_folder.read_dir().unwrap() {
-                let entry = entry.unwrap();
-                let path = entry.path();
-                if path.is_dir() {
-                    ServerUtilities::serve_static(&path, router);
-                } else {
-                    let relative_path = path.strip_prefix(public_folder).unwrap();
-                    let endpoint = format!("/{}", relative_path.to_str().unwrap().replace("\\", "/"));
+    pub fn serve_static(public: &PathBuf, router: &mut Router) {
+		if public.is_dir() {
+			for entry in public.read_dir().unwrap() {
+				let entry = entry.unwrap();
+				let path = entry.path();
+				if path.is_dir() {
+					todo!("make recursion..");
+					// ServerUtilities::serve_static(&path, router);
+				} else {
+					let relative_path = path.strip_prefix(public).unwrap();
+					let endpoint = format!("/{}", relative_path.to_str().unwrap().replace("\\", "/"));
 
-                    let action = move |req: Request| {
-                        ServerUtilities::serve_file(req, path.clone());
-                    };
+					let action = move |req: Request| {
+						ServerUtilities::serve_file(req, path.clone());
+					};
 
-                    router.add_route("GET", &endpoint, Box::new(action));
+					router.add_route("GET", &endpoint, Box::new(action));
 
-                    println!("Serving file at endpoint: {}", endpoint);
-                }
-            }
-        } else {
-            panic!("This folder doesn't exist! Check the provided path!...");
-        }
+					println!("Serving file at endpoint: {}", endpoint);
+				}
+			}
+		} else {
+			panic!("This folder doesn't exist! Check the provided path!...");
+		}
     }
-
+	
+	
+	pub fn public_folders_handler(public_folders: Vec<&PathBuf>, router: &mut Router){
+		for public in public_folders{
+			ServerUtilities::serve_static(public,router);
+		}
+	}
+	
+	
+	
     pub fn serve_file(request: Request, file_path: PathBuf) {
         let file = match File::open(&file_path) {
             Ok(file) => file,
@@ -106,38 +145,22 @@ impl ServerUtilities {
             .with_header(Header::from_bytes("Content-Type", mime_type.to_string()).unwrap());
         request.respond(response).unwrap();
     }
-
-    pub fn run_server(server_options: Option<ServerOptions>) {
-        let server = Server::http("0.0.0.0:8000").unwrap();
+	
+	//rewrite based on ServerOptions
+    pub fn run_server(server_options: ServerOptions){
+		let port = server_options.get_port();
+		let public_folders = server_options.get_public_folders();
+		let A = format!("0.0.0.0:{}", port);
+		
+		println!("{}", A);
+		
+        let server = Server::http(A).unwrap();
         println!("HTTP server listening on port 8000!");
         let mut router = Router::new();
-        let public_folder_path = &PathBuf::from("public");
-        
-        match server_options {
-            Some(server_options) => {
-                let public_folders = server_options.public_folders;
-                println!("{:?}", public_folders);
-                if let Some(publics) = public_folders {
-                    for single_public in publics {
-                        ServerUtilities::serve_static(single_public, &mut router);  // Usa la funzione di ServerUtilities
-                    }
-                }
-            },
-            None => {}
-        }
-        
-        router.add_route(
-            "GET",
-            "/hello",
-            Box::new(|req: Request| {
-                let response = Response::from_string("Hello, World!")
-                    .with_header(Header::from_bytes("Content-Type", "text/plain; charset=UTF-8").unwrap());
-                req.respond(response).unwrap();
-            }),
-        );
-
+		ServerUtilities::public_folders_handler(public_folders.unwrap(), &mut router);
         for request in server.incoming_requests() {
             router.request_handler(request);
         }
     }
 }
+
