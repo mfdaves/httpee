@@ -159,7 +159,7 @@ impl ServerUtilities {
         let mut router = Router::new();
 		
 		if let Some(folders) = public_folders {
-			ServerUtilities::public_folders_handler(public_folders, &mut router);
+			ServerUtilities::public_folders_handler(folders, &mut router);
 		} else {
 			println!("No public folders provided...");
 		} 
