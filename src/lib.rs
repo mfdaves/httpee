@@ -155,7 +155,7 @@ impl ServerUtilities {
 		println!("{}", A);
 		
         let server = Server::http(A).unwrap();
-        println!("HTTP server listening on port 8000!");
+        println!("HTTP server listening on port {}!", port);
         let mut router = Router::new();
 		
 		if let Some(folders) = public_folders {
