@@ -100,8 +100,8 @@ impl ServerUtilities {
 				if path.is_dir() {
 					ServerUtilities::serve_static(&path, router);
 				} else {
-					let relative_path = path.strip_prefix(public).unwrap();
-					let endpoint = format!("/{}", relative_path.to_str().unwrap().replace("\\", "/"));
+					// let relative_path = path.strip_prefix(public).unwrap();
+					let endpoint = format!("/{}", path.to_str().unwrap().replace("\\", "/"));
 					let action = move |req: Request| {
 						ServerUtilities::serve_file(req, path.clone());
 					};
