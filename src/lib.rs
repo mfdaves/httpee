@@ -71,8 +71,6 @@ impl Default for ServerOptions<'_> {
 
 
 
-
-
 pub struct ServerUtilities;
 
 impl ServerUtilities {
@@ -100,18 +98,14 @@ impl ServerUtilities {
 				let entry = entry.unwrap();
 				let path = entry.path();
 				if path.is_dir() {
-					todo!("make recursion..");
-					// ServerUtilities::serve_static(&path, router);
+					ServerUtilities::serve_static(&path, router);
 				} else {
 					let relative_path = path.strip_prefix(public).unwrap();
 					let endpoint = format!("/{}", relative_path.to_str().unwrap().replace("\\", "/"));
-
 					let action = move |req: Request| {
 						ServerUtilities::serve_file(req, path.clone());
 					};
-
 					router.add_route("GET", &endpoint, Box::new(action));
-
 					println!("Serving file at endpoint: {}", endpoint);
 				}
 			}
@@ -150,16 +144,13 @@ impl ServerUtilities {
     pub fn run_server(server_options: ServerOptions){
 		let port = server_options.get_port();
 		let public_folders = server_options.get_public_folders();
-		let A = format!("0.0.0.0:{}", port);
-		
-		println!("{}", A);
-		
-        let server = Server::http(A).unwrap();
-        println!("HTTP server listening on port 8000!");
+		let address = format!("0.0.0.0:{}", port);
+		println!("{}", address);
+        let server = Server::http(address).unwrap();
+        println!("HTTP server listening on port {}!", port);
         let mut router = Router::new();
-		
 		if let Some(folders) = public_folders {
-			ServerUtilities::public_folders_handler(public_folders, &mut router);
+			ServerUtilities::public_folders_handler(folders, &mut router);
 		} else {
 			println!("No public folders provided...");
 		} 
@@ -168,4 +159,5 @@ impl ServerUtilities {
         }
     }
 }
+
 
