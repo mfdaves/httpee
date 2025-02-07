@@ -19,11 +19,9 @@ impl Router {
             routes: HashMap::new(),
         }
     }
-
     pub fn add_route(&mut self, method: &str, endpoint: &str, function: Box<dyn Fn(Request)>) {
         self.routes.insert((method.to_string(), endpoint.to_string()), function);
     }
-
     pub fn request_handler(&self, req: Request) {
         let endpoint = req.url().to_string();
         let method = req.method().as_str().to_string();
@@ -133,7 +131,6 @@ impl ServerUtilities {
                 return;
             }
         };
-
         let mime_type = mime_guess::from_path(&file_path).first_or_octet_stream();
         let response = Response::from_file(file)
             .with_header(Header::from_bytes("Content-Type", mime_type.to_string()).unwrap());
